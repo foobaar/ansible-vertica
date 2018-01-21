@@ -1,0 +1,15 @@
+[Unit]
+Description=Verticad Service
+
+[Service]
+Type=forking
+TimeoutSec=infinite
+Restart=always
+User=dbadmin
+LimitNOFILE=65536
+LimitNICE=0
+ExecStart=/opt/vertica/bin/adminTools -t command_host -c start
+ExecStop=/opt/vertica/bin/adminTools -t command_host -c stop
+
+[Install]
+WantedBy=multi-user.target

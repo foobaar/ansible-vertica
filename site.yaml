@@ -1,0 +1,9 @@
+# Based on https://github.com/semberal/vertica-vagrant
+
+- hosts: vertica
+  roles:
+    - vertica-vm
+  become_user: root
+  become_method: sudo
+  become: true
+  tags: vertica
