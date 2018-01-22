@@ -1,0 +1,2 @@
+vertica_version: 9.0.1-0_amd64
+vertica_block_dev: /dev/sda

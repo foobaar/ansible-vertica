@@ -6,25 +6,26 @@
   ignore_errors: True
 
 - name: Install Vertica dependencies
-  apt: name={{item}} state=present update_cache=true
+  apt: name={{ item }} state=present update_cache=true
   with_items:
     - sysstat
     - pstack
     - ntp
     - dialog
   when: vertica_deb_installed_check|failed
+  register: depend_installed
 
 - name: Set deb file
   copy:
-    src: "{{ role_path }}/files/vertica_{{vertica_version}}.deb"
+    src: "{{ role_path }}/files/vertica_{{ vertica_version }}.deb"
     dest: /tmp/vertica_{{vertica_version}}.deb
   when: vertica_deb_installed_check|failed
   register: set_file
 
 - name: Install Vertica DEB package
-  apt:  deb=/tmp/vertica_{{vertica_version}}.deb state=installed
+  apt:  deb=/tmp/vertica_{{ vertica_version }}.deb state=installed
   register: vertica_installed
-  when: vertica_deb_installed_check|failed and set_file
+  when: vertica_deb_installed_check|failed and set_file and depend_installed
 
 - name: Create the install config
   shell: /opt/vertica/sbin/install_vertica --hosts 127.0.0.1 --license CE --accept-eula --dba-user-password-disabled --record-config /tmp/vertica-conf.prp

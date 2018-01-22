@@ -1,21 +1,42 @@
 ---
-- name: Create swap space
-  command: dd if=/dev/zero of=/mnt/swapfile bs=1024 count=2097152
-  when: ansible_swaptotal_mb < 1
+- name: write swap file
+  command: fallocate -l 2048 /mnt/swapfile
+  args:
+    creates: /mnt/swapfile
+  register: write_swapfile
+  when: ansible_swaptotal_mb < 2048
 
-- name: Make swap
+- name: set swap file permissions
+  file:
+    path: /mnt/swapfile
+    owner: root
+    group: root
+    mode: 0600
+  when: write_swapfile.changed
+
+- name: create swap file
   command: mkswap /mnt/swapfile
-  when: ansible_swaptotal_mb < 1
+  register: _create_swapfile
+  when: write_swapfile.changed
 
 - name: Turn swap on
   command: swapon /mnt/swapfile
-  when: ansible_swaptotal_mb < 1
+  when: write_swapfile.changed
 
-- name: Get swappiness value
-  command: cat /proc/sys/vm/swappiness
-  register: current_swappiness
-  changed_when: False
+- name: add swapfile to /etc/fstab
+  mount:
+    name: none
+    src: /mnt/swapfile
+    fstype: swap
+    opts: sw
+    passno: '0'
+    dump: '0'
+    state: present
+  when: write_swapfile.changed
 
-- name: Set swapiness to 1 (use swap only as the last resort)
-  shell: echo 1 > /proc/sys/vm/swappiness
-  when: current_swappiness.stdout != '1'
+- name: set swapiness
+  sysctl:
+    name: vm.swappiness
+    value: "1"
+    reload: true
+    state: present

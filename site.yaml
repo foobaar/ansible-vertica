@@ -1,5 +1,4 @@
-# Based on https://github.com/semberal/vertica-vagrant
-
+---
 - hosts: vertica
   roles:
     - vertica-vm

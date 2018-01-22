@@ -1,17 +1,17 @@
 ---
 - name: Find /dev/sda readahead
-  command: /sbin/blockdev --getra /dev/sda
+  command: /sbin/blockdev --getra {{ vertica_block_dev }}
   register: readahead_size
   changed_when: False
 
 - name: Fix /dev/sda readahead
-  command: /sbin/blockdev --setra 2048 /dev/sda
+  command: /sbin/blockdev --setra 2048 {{ vertica_block_dev }}
   when: readahead_size.stdout != "2048"
 
-- name: Fix /dev/sda1 readahead
+- name: Fix /dev/sda readahead permanently
   lineinfile:
     path: /etc/rc.local
-    regexp: '^/sbin/blockdev --setra 2048 /dev/sda'
+    regexp: '^/sbin/blockdev --setra 2048 {{ vertica_block_dev }}'
     insertbefore: '^exit 0'
-    line: '/sbin/blockdev --setra 2048 /dev/sda'
+    line: '/sbin/blockdev --setra 2048 {{ vertica_block_dev }}'
   when: readahead_size.stdout != "2048"
