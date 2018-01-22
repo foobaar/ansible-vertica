@@ -1,0 +1,50 @@
+---
+- name: Check if Vertica is already installed
+  command: dpkg -l vertica
+  register: vertica_deb_installed_check
+  changed_when: False
+  ignore_errors: True
+
+- name: Install Vertica dependencies
+  apt: name={{item}} state=present update_cache=true
+  with_items:
+    - sysstat
+    - pstack
+    - ntp
+    - dialog
+  when: vertica_deb_installed_check|failed
+
+- name: Set deb file
+  copy:
+    src: "{{ role_path }}/files/vertica_{{vertica_version}}.deb"
+    dest: /tmp/vertica_{{vertica_version}}.deb
+  when: vertica_deb_installed_check|failed
+  register: set_file
+
+- name: Install Vertica DEB package
+  apt:  deb=/tmp/vertica_{{vertica_version}}.deb state=installed
+  register: vertica_installed
+  when: vertica_deb_installed_check|failed and set_file
+
+- name: Create the install config
+  shell: /opt/vertica/sbin/install_vertica --hosts 127.0.0.1 --license CE --accept-eula --dba-user-password-disabled --record-config /tmp/vertica-conf.prp
+  when: vertica_installed
+  register: install_conf_created
+
+- name: Install Vertica using the install script and config file
+  shell: /opt/vertica/sbin/install_vertica  --config-file /tmp/vertica-conf.prp
+  when: install_conf_created
+
+#- name: Install verticad.service file
+#  template: src=verticad.service.j2 dest=/etc/systemd/system/verticad.service
+
+#- name: Check if the default database exists
+#  command: test -d /home/dbadmin/default
+#  register: default_database_exists_check
+#  changed_when: False
+#  ignore_errors: True
+#
+#- name: Create default Vertica database
+#  shell: su dbadmin -c "/opt/vertica/bin/adminTools -t create_db -s 127.0.0.1 -d default"
+#  when: default_database_exists_check|failed
+#  register: createdb

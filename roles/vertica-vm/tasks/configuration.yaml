@@ -1,3 +1,4 @@
+---
 - name: Set default locale to en_US.UTF-8
   lineinfile: dest=/etc/default/locale state=present line='LC_ALL="en_US.UTF-8"'
 
